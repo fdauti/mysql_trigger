@@ -1,0 +1,29 @@
+"
+Name: Fatjon Dauti
+"
+
+DELIMITER $$
+CREATE TRIGGER different_pop_nbb
+BEFORE UPDATE ON city
+FOR EACH ROW BEGIN
+DECLARE country_recent INT(10);
+DECLARE country_past INT(10);
+SELECT population INTO country_past FROM country WHERE code=NEW.countrycode;
+UPDATE country SET population = population - OLD.population + NEW.population WHERE code=NEW.countrycode;
+SELECT population INTO country_recent FROM country WHERE code=NEW.countrycode;
+INSERT INTO different_population (City_past_population, City_recent_population, Country_past_population, Country_recent_population) 
+VALUES (OLD.population, NEW.population, country_past, country_recent);
+END $$
+DELIMITER ;
+
+
+"Testing"
+UPDATE city SET population = 10 WHERE NAME='Amsterdam';
+UPDATE city SET population = 1000000 WHERE NAME='Amsterdam';
+SELECT * FROM different_population;
+"
+City_past_population  City_recent_population  Country_past_population  Country_recent_population  
+--------------------  ----------------------  -----------------------  ---------------------------
+              731200                      10                 15864000                     15132810
+                  10                 1000000                 15132810                     16132800
+"
